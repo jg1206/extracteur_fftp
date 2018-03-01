@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block body %}
+
+<div class="container-fluid">
+	<h1 class="page-header" id="cerema">Extracteur tables principales des Fichiers fonciers</h1>
+ 	
+	<div class="panel panel-default">
+		<div class="panel-heading">
+	    <h2>Paramètres</h2>
+	    </div>
+	    
+	    {% if errors %}
+	    <div class="panel panel-danger">
+			<div class="panel-heading">Erreurs</div>
+	    	{% for error in errors %}
+	    		<button type="button" class="btn btn-danger"><strong>{{error}}</strong></button>
+		    {% endfor %}
+    		</div> 
+    	{% endif %}
+		<div class="panel-body">
+	  		<form method="post" class="form-horizontal">
+			{% csrf_token %}	  
+	  			<div class="form-group">
+	    			<label for="host" class="col-sm-2 control-label">hôte</label>
+					<div class="col-sm-10">
+						<p><input type="text" class="form-control" name="host" placeholder="localhost" 
+						data-toggle="tooltip" title="Entrez ici l'adresse serveur de la base de données localhost dans le cas d'une installation en local ou une adresse IP si installation en mode serveur."/></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="utilisateur" class="col-sm-2 control-label">utilisateur</label>
+					<div class="col-sm-10" id="loong-text-box">
+						<p><input type="text" class="form-control" name="utilisateur" placeholder="admin"
+						data-toggle="tooltip" title="Entrez un login ayant le droit d'écrire (créer des schémas et des tables) dans la base de données, classiquement ce sera le login d'administrateur."/></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="password" class="col-sm-2 control-label">mot de passe</label>
+					<div class="col-sm-10">
+						<p><input type="password" class="form-control" name="password" placeholder="mot de passe"/></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="base" class="col-sm-2 control-label">base</label>
+					<div class="col-sm-10">
+						<p><input type="text" class="form-control" name="base" placeholder="fichiersfonciers"
+						data-toggle="tooltip" title="Entrez le nom de la base de données où se trouve vos fichiers fonciers locaux."/></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="millesime" class="col-sm-2 control-label">Millésime</label>
+					<div class="col-sm-10">
+						<select class="form-control" name="annee">
+					    {% for annee in MILLESIMES %}
+					    <option value="{{annee}}" {% if millesime == annee %}selected{% endif %}>{{annee}}</option>
+					    {% endfor %}
+					    </select>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="perimetre" class="col-sm-2 control-label">nom du périmètre</label>
+					<div class="col-sm-10">
+						<p><input type="text" class="form-control" name="perimetre" placeholder="lille_metropole"
+						data-toggle="tooltip" title="Entrez un nom de perimetre sans caractères spéciaux comme dans l'exemple proposé ici."/></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="chemin" class="col-sm-2 control-label">chemin du répertoire de sauvegarde</label>
+					<div class="col-sm-10">
+						<p><input type="text" class="form-control" name="chemin" value="{{CHEMIN_DEFAUT}}"
+						data-toggle="tooltip" title="Entrez un chemin de répertoire pour la sauvegarde. Celui ci ne devra pas contenir de caractères spéciaux!!!"/></p>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="csvfile" class="col-sm-2 control-label" >liste de codes communaux</label>
+					<div class="col-sm-10">
+						<p><input type="text" class="form-control" name="csvfile" value="{{CHEMIN_CSV_TEST}}" 
+						data-toggle="tooltip" title="liste de codes insee communaux dans un fichier .csv"/></p>
+					</div>
+				</div>
+			<button type="submit" class="btn btn-block btn-lg"><strong>Soumettre</strong></button>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();   
+});
+</script>
+
+{% endblock %}
+
