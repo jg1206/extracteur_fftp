@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block body %}
+
+<div class="container-fluid">
+	<h1 class="page-header" id="cerema">Extraction en cours</h1>
+</div>
+
+<div class="vide"></div>
+
+<script>
+    $(function() {
+        $(window).load(function(){
+             $('.vide').trigger('click', '1');
+        });
+        $('.vide').click(function(event, etape) {            
+            if (etape == undefined) etape = '1';
+             $.getJSON('/extracteur/step/' + etape, function(data) {
+             		   if (etape == '9999') {
+             			   window.location.href = '/extracteur/fin_traitement';
+             		   }             		   
+             		   else {
+	                       if (data.erreur) window.location.href = '/extracteur/erreur';	                       
+	                       $('.vide').trigger('click', data.etape_suivante);
+             		   }
+              });
+
+        });  
+    });
+</script>
+
+{% endblock %}

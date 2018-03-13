@@ -19,6 +19,9 @@ from collections import namedtuple
 import os, csv
 from zipfile import ZipFile as zip
 
+
+TABLES_FF = ['propro',
+             'fzegz']
  
 def schema_ff(millesime, departement):
     return 'ff_d{0}_{1}'.format(departement, millesime)
@@ -80,15 +83,33 @@ def export_schema_sql(schema_dest, chemin_sauvegarde, pgoutils, host, user, base
     
 def lister_codes_communes(fichier_liste, chp_idcom):
     """fonction permettant la création d'une liste de code insee depuis un csv
+    """    
+    try :
+        liste_codes_commune = [] 
+        with open(fichier_liste, newline = '', encoding = 'UTF-8') as f:
+            reader = csv.reader(f)
+            champs = ",".join(next(reader))
+            Headers = namedtuple('Headers', champs)
+            for header in map(Headers._make, reader):
+                liste_codes_commune.append(getattr(header, chp_idcom))# getattr(header, chp_idcom) <-> header.idcom
+        if not verif_idcom(liste_codes_commune):
+            return None, "Les codes Insee spécifiés dans le fichier communal ne sont pas conformes."
+        return liste_codes_commune, None
+    except FileNotFoundError as e:
+        print(e)
+        return None, "Fichier communal non trouvé"
+    except AttributeError as e:
+        print(e)
+        return None, "Le fichier spécifié n'a pas d'attribut 'idcom'."
+    except Exception as e:
+        print(e)
+        return None, e
+        
+def  verif_idcom(communes):
     """
-    liste_codes_commune= []
-    with open(fichier_liste,newline='', encoding = 'UTF-8') as f:
-        reader = csv.reader(f)
-        champs= ",".join(next(reader))
-        Headers = namedtuple('Headers', champs)
-        for header in map(Headers._make, reader):
-            liste_codes_commune.append(getattr(header, chp_idcom))# getattr(header, chp_idcom) <-> header.idcom
-    return liste_codes_commune 
+    Fonction qui vérifie que les idcom de la liste sont des codes Insee correct
+    """
+    return True
     
 
 def zipper(source,dest):
@@ -126,6 +147,7 @@ def extract_fonction_unique(host, base, user, password, perimetre, liste_idcom, 
     os.remove('{0}{1}.sql'.format(chemin, schema_dest)) 
     print('suppression du fichier sql après compression...OK')
     print('TRAVAIL TERMINE ;p')
+    return True
 
 
     

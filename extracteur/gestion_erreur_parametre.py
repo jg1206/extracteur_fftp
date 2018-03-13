@@ -6,6 +6,7 @@ Created on 28 févr. 2018
 fonctions python permettant de gérer les erreurs potentielles dans la saisie des paramètres de l'application extracteur_fftp
 '''
 import re, subprocess
+import psycopg2
 
 def validate_ip(s):
     '''validation d'une adresse IP
@@ -34,7 +35,7 @@ def msg_error_host(host):
     '''affectation d'un message d'erreur si hote invalide
     '''
     if error_host(host) is False:
-        msg_error_host = '''L'hôte entré n'est pas de la bonne forme'''
+        msg_error_host = '''L'hôte entré n'est pas valide'''
         return msg_error_host
     return None
 
@@ -46,14 +47,9 @@ def error_user(user):
 
 def msg_error_user(user):
     if error_user(user) is False:
-        msg_error_user = '''veuillez rentrer un nom d'utilisateur valide'''
+        msg_error_user = '''Le nom d'utilisateur n'est pas valide.'''
         return msg_error_user
     return None
-        
-def check_base(base,user,host,password):
-    try subprocess.run(["psql", "-c","select postgis_version()", "-U", user, "-h", host, base], check = True):
-        return True
-    return False
 
 def error_base(base):
     if base != '':
@@ -63,11 +59,9 @@ def error_base(base):
 
 def msg_error_base(base):
     if error_user(base) is False:
-        msg_error_base = 'veuillez rentrer un nom de base de données valide'
+        msg_error_base = "Le nom de la base de données n'est pas valide."
         return msg_error_base
-    else:
-        msg_error_base = ''
-        return msg_error_base
+    return None
 
 
 def error_perimetre(perimetre):
@@ -77,7 +71,15 @@ def error_perimetre(perimetre):
         msg_error_perimetre = 'vous avez entré des caractères spéciaux dans votre périmètre....'
         return msg_error_perimetre
 
-
+def tentative_connexion(hote, bdd, utilisateur, mdp, port):
+    '''
+    Tente une connexion à la base PostgreSQL spécifiée
+    '''
+    try:
+        conn = psycopg2.connect(host=hote, database=bdd, port=port, user=utilisateur, password=mdp)
+        return True
+    except Exception as e:
+        return False
 
 # Fonction agrégeant tous les test sur le formulaire
 def test_formulaire(host, user, base):
