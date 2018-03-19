@@ -77,7 +77,7 @@ def traitement(request, etape):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 def fin_traitement(request):
-    return render(request, 'accueil.html', locals())
+    return render(request, 'fin_traitement.html', locals())
 
 def erreur(request):
-    return render(request, 'accueil.html', locals())
+    return render(request, 'erreur.html', locals())
