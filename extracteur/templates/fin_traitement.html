@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block body %}
+
+<div class="container">
+	<h1 class="page-header" id="cerema">Extacteur tables principales des Fichiers fonciers</h1>
+</div>
+
+<div class="container">
+  <div class="alert alert-success">
+    <strong>Success!</strong> Extraction Terminée pour le périmètre {{ perimetre }}.
+  </div>
+</div>
+
+<div class="container">
+  <button type="btn-group btn-group-lg" class="btn" href="http://127.0.0.1:8000/extracteur/accueil/">Accueil</button>
+</div>
+
+<div class="vide"></div>
+
+{% endblock %}
