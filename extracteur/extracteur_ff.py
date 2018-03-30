@@ -16,29 +16,12 @@ le script posera plusieurs questions:
 
 from pg.pgbasics import PgOutils
 from collections import namedtuple
-import os, csv, re
+import os, csv
 from zipfile import ZipFile as zip
 
-SCHEMA_FF = 'ff_dDD_AAAA'
-TABLES_FF = ['dDD_AAAA_proprietaire_droit',
-             'dDD_AAAA_fantoir_commune',
-             'dDD_AAAA_fantoir_voie',
-             'dDD_AAAA_lotslocaux',
-             'dDD_AAAA_pb30_pevexoneration',
-             'dDD_AAAA_pb36_pevtaxation',
-             'dDD_AAAA_pb40_pevprincipale',
-             'dDD_AAAA_pb50_pevprofessionnelle',
-             'dDD_AAAA_pb60_pevdependance',
-             'dDD_AAAA_pdl10_pdl',
-             'dDD_AAAA_pdl20_parcellecomposante',
-             'dDD_AAAA_pdl30_lots',
-             'dDD_AAAA_re00',
-             'dDD_AAAA_pnb21_suf',
-             'dDD_AAAA_pnb30_sufexoneration',
-             'dDD_AAAA_pnb36_suftaxation',
-             'dDD_AAAA_pb21_pev',
-             'dDD_AAAA_pb0010_local',
-             'dDD_AAAA_pnb10_parcelle']
+
+TABLES_FF = ['propro',
+             'fzegz']
  
 def schema_ff(millesime, departement):
     return 'ff_d{0}_{1}'.format(departement, millesime)
@@ -71,24 +54,8 @@ def inserer_donnees(communes, millesime, perimetre, tables, pgoutils):
 def creation_schema_extraction(perimetre,millesime, pgoutils):
     pgoutils.effacer_et_creer_schema('ff_{0}_{1}'.format(perimetre, millesime))
     print('schéma d''extraction créé')
-    return True
     
-def comparaison_tables(pgoutils, schema_ref, dpt, millesime):
-    '''comparaison des tables présentes dans le schéma source par rapport à la liste des tables principales TABLES_FF
-    ceci permettra de ne copier que les tables principales d'un millésime sans prendre en compte d'éventuels ajouts dans le schéma
-    par l'administrateur local
-    '''
-    tables_presentes = pgoutils.lister_tables(schema_ref)
-    tables_references = []
-    for table in TABLES_FF:
-        print(dpt)
-        print(millesime)
-        tables_references.append(table.replace('DD',dpt).replace('AAAA',millesime))
-    liste_tables_communes = set(tables_presentes).intersection(tables_references)
-    return liste_tables_communes
-    
-
-def creation_tables_vides_in_schemas_extraction(perimetre, millesime, communes, schema_dest, pgoutils, schema_ref):
+def creation_tables_vides_in_schemas_extraction(perimetre, millesime, communes, schema_dest, pgoutils):
     '''lister tables présentes dans le schéma origine
     et les copier vides dans le schémas d'extractions
     '''
@@ -96,11 +63,11 @@ def creation_tables_vides_in_schemas_extraction(perimetre, millesime, communes, 
     print(dep)
     schema_modele = 'ff_d{0}_{1}'.format(dep,millesime)
     print(schema_modele)
-    tables = comparaison_tables(pgoutils, schema_ref, dep, millesime)
+    tables = pgoutils.lister_tables(schema_modele)
     for table in tables:
         sql= '''CREATE TABLE {0}.{1} AS SELECT * FROM {3}.{2} WITH NO DATA;'''.format(schema_dest, table_final(table), table, schema_modele)
         pgoutils.execution(sql, 1)
-    return tables, True
+    return tables
      
 def export_schema_sql(schema_dest, chemin_sauvegarde, pgoutils, host, user, base):
     command = 'pg_dump -v -x -O -n {0} -f {1} -h {2} -U {3} {4}'.format(schema_dest, chemin_sauvegarde, host, user, base)
@@ -142,13 +109,9 @@ def  verif_idcom(communes):
     """
     Fonction qui vérifie que les idcom de la liste sont des codes Insee correct
     """
-    list_idcom= communes
-    pattern = re.compile(r'[0-9][0-9aAbB][0-9]{3}')
-    for item in list_idcom:
-        if pattern.match(item):
-            return True
-        return False
-           
+    return True
+    
+
 def zipper(source,dest):
     """
     zippe une source depuis une cible vers une destination
@@ -168,17 +131,12 @@ def extract_fonction_unique(host, base, user, password, perimetre, liste_idcom, 
     params = {'hote':host, 'base':base, 'port':'5432','utilisateur':user,'motdepasse':password}
     pgoutils = PgOutils(**params)
     dpts = departements(liste_idcom)
-    print(dpts)
-    schema_ref = 'ff_d{0}_{1}'.format(dpts[0], millesime)
-    print(schema_ref)
     print('détermination des départements du périmètre...OK')
     schema_dest='ff_{0}_{1}'.format(perimetre, millesime)
     creation_schema_extraction(perimetre, millesime, pgoutils)
-    print('création du schéma d''accueil des données à extraire...OK')
-    # comparaison des tables présentes dans le schéma source par rapport à la liste des tables principales TABLES_FF
-     
-    tables = creation_tables_vides_in_schemas_extraction(perimetre, millesime, dpts, schema_dest, pgoutils, schema_ref)
-    print('création des tables vides à partir du schéma départemental d''origine...OK')
+    print('création du schéma d''accueil des données à extraire...OK') 
+    tables = creation_tables_vides_in_schemas_extraction(perimetre, millesime, dpts, schema_dest, pgoutils)
+    print('création des tables vides à partir du schéma départemntal d''origine...OK')
     inserer_donnees(liste_idcom, millesime, perimetre, tables, pgoutils)
     print('insertion des données dans les tables en fonction de la liste d''idcom...OK')
     export_schema_sql(schema_dest, '{0}{1}.sql'.format(chemin, schema_dest), pgoutils, host, user, base)

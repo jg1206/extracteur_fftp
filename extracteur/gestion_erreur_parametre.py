@@ -6,6 +6,7 @@ Created on 28 févr. 2018
 fonctions python permettant de gérer les erreurs potentielles dans la saisie des paramètres de l'application extracteur_fftp
 '''
 import re, subprocess
+from pg.pgbasics import PgOutils
 import psycopg2
 
 def validate_ip(s):
@@ -26,9 +27,9 @@ def error_host(host):
     '''validation d'un hote soit en localhost soit en adresse IPv4
     '''
     if host == 'localhost' or validate_ip(host):
-        return True
+        return True, 'IP Valide'
     else:
-        return False
+        return False, "l'adresse IP n'est pas valide"
     
 
 def msg_error_host(host):
@@ -42,8 +43,8 @@ def msg_error_host(host):
 def error_user(user):
     if user != '':
         if re.match("^[a-z0-9_]*$",user):
-            return True
-    return False
+            return True, "nom d'utilisateur ok"
+    return False,"Le nom d'utilisateur contient des caractères non-autorisés"
 
 def msg_error_user(user):
     if error_user(user) is False:
@@ -54,8 +55,8 @@ def msg_error_user(user):
 def error_base(base):
     if base != '':
         if re.match("^[a-z0-9_]*$",base):
-            return True
-    return False
+            return True, 'nom de base ok'
+    return False, 'Le nom de base contient des caractères non-autorisés'
 
 def msg_error_base(base):
     if error_user(base) is False:
@@ -65,11 +66,25 @@ def msg_error_base(base):
 
 
 def error_perimetre(perimetre):
-    if re.match("^[a-z0-9_]*$", perimetre):
-        return True
-    else:
-        msg_error_perimetre = 'vous avez entré des caractères spéciaux dans votre périmètre....'
-        return msg_error_perimetre
+    if perimetre != '':
+        if re.match("^[a-z0-9_]*$",perimetre):
+            return True, 'ok'
+    return False, 'vous avez entré des caractères spéciaux dans votre périmètre....'
+    
+
+def error_schema_a_creer(host, base, user, password, perimetre, millesime):
+    """
+    permet de tester la présence du schema qui va être créé par l'application
+    en fonction du nom de périmètre qui aura été entré dans le formulaire
+    """
+    params = {'hote':host, 'base':base, 'port':'5432','utilisateur':user,'motdepasse':password}
+    pgoutils = PgOutils(**params)
+    liste_schemas = pgoutils.lister_schemas()
+    schema_ext = 'ff_{0}_{1}'.format(perimetre, millesime)
+    if schema_ext not in liste_schemas:
+        return True, 'périmètre ok'
+    return False, 'le schéma d\'extraction qui devrait être créé existe déjà, merci de le supprimer ou de changer le nom du périmètre...'
+    
 
 def tentative_connexion(hote, bdd, utilisateur, mdp, port):
     '''
@@ -77,27 +92,44 @@ def tentative_connexion(hote, bdd, utilisateur, mdp, port):
     '''
     try:
         conn = psycopg2.connect(host=hote, database=bdd, port=port, user=utilisateur, password=mdp)
-        return True
+        return True, 'connexion possible'
     except Exception as e:
-        return False
+        return False, 'La connexion a la base de donnée a échoué. Revoyez vos paramètres de connexion ou votre connexion réseau.'
+    
+   
+
 
 # Fonction agrégeant tous les test sur le formulaire
-def test_formulaire(host, user, base):
+def test_formulaire(host, base, user, password, perimetre, liste_idcom, millesime, chemin):
     errors = []
-    error_host = msg_error_host(host)
-    error_user = msg_error_user(user)
-    error_base = msg_error_base(base)
-    if error_host:
-        print(error_host)
-        errors.append(error_host)
-    if error_user:
-        print(error_user)
-        errors.append(error_user)
-    if error_base:
-        print(error_base)
-        errors.append(error_base)
+#   test forme hote
+    success, msg = error_host(host)
+    if not success:
+        print(msg)
+        errors.append(msg)
+#   test forme user
+    success, msg = error_user(user)
+    if not success:
+        print(msg)
+        errors.append(msg)
+#   test forme base
+    success, msg = error_base(base)
+    if not success:
+        print(msg)
+        errors.append(msg)
+#   test forme perimetre
+    success, msg = error_perimetre(perimetre)
+    if not success:
+        print(msg)
+        errors.append(msg)
+#     test connexion
+    success, msg = tentative_connexion(host, base, user, password, 5432)
+    if not success:
+        print(msg)
+        errors.append(msg)
+#     test schema de livraison
+#     success, msg = error_schema_a_creer(host, base, user, password, perimetre, millesime)
+#     if not success:
+#         print(msg)
+#         errors.append(msg)
     return errors
-
-    
-    
-
