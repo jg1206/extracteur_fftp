@@ -8,6 +8,7 @@ fonctions python permettant de gérer les erreurs potentielles dans la saisie de
 import re, subprocess
 from pg.pgbasics import PgOutils
 import psycopg2
+import os
 
 def validate_ip(s):
     '''validation d'une adresse IP
@@ -82,8 +83,8 @@ def error_schema_a_creer(host, base, user, password, perimetre, millesime):
     liste_schemas = pgoutils.lister_schemas()
     schema_ext = 'ff_{0}_{1}'.format(perimetre, millesime)
     if schema_ext not in liste_schemas:
-        return True, 'périmètre ok'
-    return False, 'le schéma d\'extraction qui devrait être créé existe déjà, merci de le supprimer ou de changer le nom du périmètre...'
+        return True, 'Périmètre ok'
+    return False, 'Le schéma d\'extraction ({0}) qui devrait être créé existe déjà, merci de le supprimer ou de changer le nom du périmètre...'.format(schema_ext)
     
 
 def tentative_connexion(hote, bdd, utilisateur, mdp, port):
@@ -91,12 +92,16 @@ def tentative_connexion(hote, bdd, utilisateur, mdp, port):
     Tente une connexion à la base PostgreSQL spécifiée
     '''
     try:
-        conn = psycopg2.connect(host=hote, database=bdd, port=port, user=utilisateur, password=mdp)
+        conn = psycopg2.connect(host=hote, dbname=bdd, port=port, user=utilisateur, password=mdp)
         return True, 'connexion possible'
     except Exception as e:
         return False, 'La connexion a la base de donnée a échoué. Revoyez vos paramètres de connexion ou votre connexion réseau.'
     
-   
+
+def error_chemin(chemin):
+    if not os.path.isdir(chemin):
+        return False, 'Le chemin spécifié n\'est pas un répertoire valide'
+    return True, 'Ok'   
 
 
 # Fonction agrégeant tous les test sur le formulaire
@@ -122,14 +127,20 @@ def test_formulaire(host, base, user, password, perimetre, liste_idcom, millesim
     if not success:
         print(msg)
         errors.append(msg)
-#     test connexion
+#    test connexion
     success, msg = tentative_connexion(host, base, user, password, 5432)
     if not success:
         print(msg)
         errors.append(msg)
-#     test schema de livraison
-#     success, msg = error_schema_a_creer(host, base, user, password, perimetre, millesime)
-#     if not success:
-#         print(msg)
-#         errors.append(msg)
+    else:
+    #    test schema de livraison uniquement si la tentative de connexion a fonctionné
+        success, msg = error_schema_a_creer(host, base, user, password, perimetre, millesime)
+        if not success:
+            print(msg)
+            errors.append(msg)
+#    test chemin est bien un repertoire valide
+    success, msg = error_chemin(chemin)
+    if not success:
+        print(msg)
+        errors.append(msg)        
     return errors

@@ -15,20 +15,20 @@ from .gestion_erreur_parametre import test_formulaire, tentative_connexion, erro
 
 
 def accueil(request):
-#     errors = []
+    errors = []
     MILLESIMES = ['2016', '2015', '2014', '2013', '2012', '2011', '2009']
     chemin = os.path.join(BASE_DIR, 'sortie_donnees') 
     fichier_csv = os.path.join(BASE_DIR,'entree_csv','liste_idcom_test.csv')
     
-#     test présence de pg_dump dans le path
+#test présence de pg_dump dans le path
     if not test_pg_dump():
-        msg = "Attention, la commande pg_dump n'est pas détectée ou présente dans le PATH windows"
+        msg = "Attention, la commande pg_dump n'est pas détectée ou présente dans le PATH Windows"
         return render(request, 'erreur.html', locals())
     
     if request.method == "POST":        
         # champs de formulaire à remplir pour faire l'extraction'
         host = request.POST['host']
-        user = request.POST['utilisateur']
+        utilisateur = request.POST['utilisateur']
         base = request.POST['base']
         password = request.POST['password']
         perimetre = request.POST['perimetre']
@@ -36,30 +36,19 @@ def accueil(request):
         millesime = request.POST['annee']
         fichier_csv = request.POST['csvfile']
         
-        # Recupération des idcom et renvoie d'erreur eventuel
+        # Recupération des idcom et renvoi d'erreur eventuel
         liste_idcom, erreur = lister_codes_communes(fichier_csv, 'idcom')
-        
-        errors = test_formulaire(host, base, user, password, perimetre, liste_idcom, millesime, chemin)
-        print(errors)
-        # test des champs du formulaire et affichage des erreurs potentielles 
-        # concernant la forme de l'hôte, la base, l'utilisateur, le périmètre
         if erreur:
-            errors.append(erreur)  
-            if  len(errors) > 0 :
-                return render(request, 'accueil.html', locals())
+            errors.append(erreur)
         
-        # test de connexion à la base de données
-#         elif not tentative_connexion(host, base, user, password, 5432):
-#             msg = "La connexion a la base de donnée a échoué. Revoyez vos paramètres de connexion ou votre connexion réseau."
-#             return render(request, 'erreur.html', locals())            
-#         
-#         elif error_schema_a_creer(host, base, user, password, perimetre, millesime) is False:
-#             msg = "le schéma d'extraction qui devrait être créé existe déjà, merci de le supprimer ou de changer le nom du périmètre..."
-#             return render(request, 'erreur.html', locals())
-        
+        errors += test_formulaire(host, base, utilisateur, password, perimetre, liste_idcom, millesime, chemin)
+        # test des champs du formulaire et affichage des erreurs potentielles 
+        # concernant la forme de l'hôte, la base, l'utilisateur, le périmètre          
+        if  len(errors) > 0 :
+            return render(request, 'accueil.html', locals())
         else :
             request.session['host'] = host
-            request.session['user'] = user
+            request.session['user'] = utilisateur
             request.session['base'] = base
             request.session['password'] = password
             request.session['perimetre'] = perimetre
@@ -76,7 +65,7 @@ def traitement(request, etape):
     print(etape)
     if etape == '9999':
         data = {}
-        return render(request, 'fin_traitement.html', locals())
+        #return render(request, 'fin_traitement.html', locals())
     elif etape == '1' :
         success, msg = extracteur.creation_schema_extraction()
         if success:
@@ -146,7 +135,7 @@ def parametres(session):
               'base': session['base'], 
               'port':'5432',
               'utilisateur': session['user'],
-              'motdepasse': session['password'],
+              'mdp': session['password'],
               'millesime': session['millesime'],
               'perimetre': session['perimetre'],
               'liste_idcom': session['liste_idcom'],

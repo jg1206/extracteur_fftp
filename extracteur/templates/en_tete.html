@@ -1,12 +1,28 @@
 {% load staticfiles %}
 
 {% block en_tete %}
-<header class="panel-header">
-    <div class="container">
-        
-        <img src="{% static 'img/logo_ff_500x427.jpg' %}" class="pull-left" alt="logo fichiers fonciers" width=20% max-width=200px>
-        <img src="{% static 'img/marianne_republique_fr.jpg' %}" class="pull-right" alt="logo ministère" width=20% max-width=200px>
-        
+
+<nav class="navbar navbar-default navbar-fixed-top" style="background-color: #fff;">
+    <div class="container-fluid">
+        <div class="navbar-header">			
+			 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+			<img src="{% static 'img/logo_ff_500x427.jpg' %}" class="pull-left" alt="logo fichiers fonciers"  style="max-height:50px; padding-right:10px">
+            <a class="navbar-brand" href="#">Extracteur FFTP</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+           <ul class ="nav navbar-nav navbar-right">
+               <img src="{% static 'img/cerema_logo.png' %}" alt="Cerema" style="max-height:45x;"/>			   
+				<img src="{% static 'img/marianne_republique_fr.jpg' %}" class="pull-right" alt="logo ministère" style="max-height:45px; padding-left:10px;">
+           </ul>    
+        </div><!--/.nav-collapse --> 
     </div>
-</header>
+</nav>
+          
+<div style='padding-top:45px;'></div> 
+
 {% endblock %}

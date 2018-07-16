@@ -28,11 +28,12 @@ class Extracteur(PgOutils):
                  'd{0}_{1}_pb0010_local',
                  'd{0}_{1}_pnb10_parcelle']
     
-    def __init__(self, hote=None, base=None, port=None, utilisateur=None, motdepasse=None, millesime=2016, perimetre='tmp', liste_idcom=None, chemin=None):
-        super().__init__(hote, base, port, utilisateur, motdepasse)
+    def __init__(self, hote=None, base=None, port=None, utilisateur=None, mdp=None, millesime=2016, perimetre='tmp', liste_idcom=None, chemin=None):
+        super().__init__(hote, base, port, utilisateur, mdp)
         self.hote = hote
         self.base = base
         self.utilisateur = utilisateur
+        self.mdp = mdp
         self.millesime = millesime
         self.perimetre = perimetre
         self.chemin = chemin
@@ -94,7 +95,8 @@ class Extracteur(PgOutils):
         return True, 'Insertion des données réussie'
     
     def dumper(self):
-        export = ExportDump(self.hote, self.utilisateur, self.base, self.schema)
+        export = ExportDump(self.hote, self.utilisateur, self.base, self.mdp, self.schema)
+        
         if not export.test_pg_dump():
             return False, "La commande pg_dump n'a pas été trouvée"        
         try:
@@ -123,7 +125,7 @@ class Extracteur(PgOutils):
     
     @requete_sql_avec_modification_args
     def inserer_donnees_communales(self, schema_final, table_finale, schema_ini, table_ini, communes):
-        return schema_final, table_finale, schema_ini, table_ini, "', '".join(communes)
+        return schema_final, table_finale, schema_ini, table_ini, "', '".join(communes).upper()
                                     
 
 class Communes:
@@ -151,10 +153,11 @@ class Communes:
 
 class ExportDump:
     
-    def __init__(self, hote, utilisateur, base, schema):
+    def __init__(self, hote, utilisateur, base, mdp, schema):
         self.hote = hote
         self.utilisateur = utilisateur
         self.base = base
+        self.mdp = mdp
         self.schema = schema
     
     def test_pg_dump(self):
@@ -163,7 +166,7 @@ class ExportDump:
         if p.returncode == 0 and p.stdout.startswith('pg_dump'):
             print('OK')
             return True
-        return False
+        return False    
     
     def dump(self, chemin_dump):
         commande = 'pg_dump -v -x -O -n {0} -f {1} -h {2} -U {3} {4}'.format(self.schema, chemin_dump, self.hote, self.utilisateur, self.base)
@@ -202,7 +205,7 @@ def lister_codes_communes(fichier_liste, chp_idcom):
             for header in map(Headers._make, reader):
                 liste_codes_commune.append(getattr(header, chp_idcom))# getattr(header, chp_idcom) <-> header.idcom
         if not verif_idcom(liste_codes_commune):
-            return None, "Les codes Insee spécifiés dans le fichier communal ne sont pas conformes."
+            return None, "Les codes Insee spécifiés dans le fichier communal ne sont pas conformes ou aucun code insee n'a été trouvé."
         return liste_codes_commune, None
     except FileNotFoundError as e:
         print(e)
@@ -218,9 +221,10 @@ def  verif_idcom(communes):
     """
     Fonction qui vérifie que les idcom de la liste sont des codes Insee correct
     """
-    list_idcom= communes
+    if len(communes) == 0:
+        return False
     pattern = re.compile(r'[0-9][0-9aAbB][0-9]{3}')
-    for item in list_idcom:
+    for item in communes:
         if pattern.match(item):
             return True
         return False
@@ -240,10 +244,13 @@ def test_pg_dump():
     à savoir s'il est dans le PATH de windows par exemple
     """
     cmd = ['pg_dump', '--version']
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    if p.returncode == 0 and p.stdout.startswith('pg_dump'):
-        return True
-    return False
+    try:
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        if p.returncode == 0 and p.stdout.startswith('pg_dump'):
+            return True
+    except Exception as e:
+        print(e)
+        return False
    
     
 def test_schema_a_creer(host, base, user, password, perimetre, liste_idcom, millesime, chemin):
@@ -289,10 +296,3 @@ def extract_fonction_unique(host, base, user, password, perimetre, liste_idcom, 
     print('TRAVAIL TERMINE ;p')
     return True
 
-
-
-    
-    
-    
-            
-            
