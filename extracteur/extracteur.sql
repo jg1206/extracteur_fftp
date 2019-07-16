@@ -1,9 +1,19 @@
 ## CREER_TABLE_VIDE
-CREATE TABLE {0}.{0}_{1} AS 
-	SELECT * FROM {2}.{3} 
+CREATE TABLE {0}.{0}_{1}  
+	(LIKE {2}.{3} INCLUDING COMMENTS INCLUDING INDEXES);
+	
+## CREER_TABLE_AGREG_VIDE
+CREATE TABLE {0}.{0}_{} AS
+	SELECT * FROM {}.{}
 	WITH NO DATA;
 
 ## INSERER_DONNEES_COMMUNALES
 INSERT INTO  {0}.{0}_{1} 
 	SELECT * FROM {2}.{3} 
 	WHERE idcom IN ('{4}');
+	
+## LISTER_ANNEXES_IDCOM
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname LIKE 'ff%annexes%{0}' AND tablename ILIKE '%d{1}%';
+

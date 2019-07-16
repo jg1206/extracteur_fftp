@@ -13,10 +13,13 @@ from .extracteurclass import Extracteur, lister_codes_communes, test_pg_dump, te
 from ff_extract_idcom.settings import BASE_DIR
 from .gestion_erreur_parametre import test_formulaire, tentative_connexion, error_schema_a_creer, error_perimetre
 
+def connexion(request):
+    
+    pass
 
 def accueil(request):
     errors = []
-    MILLESIMES = ['2016', '2015', '2014', '2013', '2012', '2011', '2009']
+    MILLESIMES = ['2017', '2016', '2015', '2014', '2013', '2012', '2011', '2009']
     chemin = os.path.join(BASE_DIR, 'sortie_donnees') 
     fichier_csv = os.path.join(BASE_DIR,'entree_csv','liste_idcom_test.csv')
     
@@ -71,7 +74,7 @@ def traitement(request, etape):
         if success:
             print('Etape 1 réussie')
             print(msg)
-            data = {'etape_suivante' : 2, 'progression' : 5, 'description': 'Creation tables vides'}
+            data = {'etape_suivante' : 2, 'progression' : 5, 'description': 'Creation tables vides FFTP'}
         else:
             print(msg)
             request.session['erreur'] = msg
@@ -81,7 +84,7 @@ def traitement(request, etape):
         if success:
             print('Etape 2 réussie')
             print(msg)
-            data = {'etape_suivante' : 3, 'progression' : 25, 'description' : 'Insertion des données communales'}
+            data = {'etape_suivante' : 3, 'progression' : 15, 'description' : 'Insertion des données communales'}
         else:
             print(msg)
             request.session['erreur'] = msg
@@ -91,7 +94,7 @@ def traitement(request, etape):
         if success:
             print('Etape 3 réussie')
             print(msg)
-            data = {'etape_suivante' : 4, 'progression' : 60, 'description' : 'Génération du dump d\'export'}
+            data = {'etape_suivante' : 4, 'progression' : 30, 'description' : 'Creation tables vides FFTP'}
         else:
             print(msg)
             request.session['erreur'] = msg
@@ -106,17 +109,7 @@ def traitement(request, etape):
             print(msg)
             request.session['erreur'] = msg
             data = {'erreur': True}
-#             A REACTIVER QUAND FONCTION COMPESSAGE OK
-#     elif etape == '5':
-#         success, msg = extracteur.zipper()
-#         if success:
-#             print('Etape 5 réussie')
-#             print(msg)
-#             data = {'etape_suivante' : 9999, 'progression' : 100, 'description' : 'Travail terminé'}
-#         else:
-#             print(msg)
-#             request.session['erreur'] = msg
-#             data = {'erreur': True}       
+
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
